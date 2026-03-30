@@ -1,1 +1,6 @@
+# Worker Environment Variables (Cloudflare Workers)
+# Copy this file to .dev.vars for local development
+# For production, use: npx wrangler secret put GROQ_API_KEY
+
+# Groq API key — get one free at https://console.groq.com
 GROQ_API_KEY=your_groq_api_key_here
