@@ -1,0 +1,75 @@
+export const skillCategories = [
+  {
+    title: "Backend & Architecture",
+    level: "Expert — 10+ years",
+    icon: "server",
+    skills: [
+      { name: "PHP / Laravel", proficiency: 95 },
+      { name: "Node.js", proficiency: 72 },
+      { name: "REST API Design", proficiency: 90 },
+      { name: "OOP / SOLID / DDD", proficiency: 88 },
+      { name: "System Architecture", proficiency: 85 },
+    ],
+  },
+  {
+    title: "Databases",
+    level: "Expert — Production DBA",
+    icon: "database",
+    skills: [
+      { name: "MySQL / MariaDB", proficiency: 95 },
+      { name: "Galera Clustering", proficiency: 85 },
+      { name: "MSSQL", proficiency: 78 },
+      { name: "Oracle DBMS", proficiency: 78 },
+      { name: "Redis", proficiency: 72 },
+    ],
+  },
+  {
+    title: "AI & Agentic Systems",
+    level: "Specialty — Production",
+    icon: "brain",
+    skills: [
+      { name: "LLM API Integration", proficiency: 88 },
+      { name: "Claude / GPT APIs", proficiency: 85 },
+      { name: "Agentic Frameworks", proficiency: 82 },
+      { name: "RAG Systems", proficiency: 78 },
+      { name: "MCP / Tool-Use Patterns", proficiency: 80 },
+      { name: "Multi-Agent Orchestration", proficiency: 75 },
+      { name: "AI-Augmented Dev", proficiency: 90 },
+    ],
+  },
+  {
+    title: "Frontend",
+    level: "Strong — Production",
+    icon: "layout",
+    skills: [
+      { name: "JavaScript / ES6+", proficiency: 85 },
+      { name: "Vue.js", proficiency: 80 },
+      { name: "React", proficiency: 75 },
+      { name: "Tailwind CSS", proficiency: 82 },
+    ],
+  },
+  {
+    title: "Infrastructure",
+    level: "Strong — DevOps & Homelab",
+    icon: "cloud",
+    skills: [
+      { name: "Docker", proficiency: 82 },
+      { name: "Linux Administration", proficiency: 85 },
+      { name: "Proxmox / VM Management", proficiency: 75 },
+      { name: "CI/CD Pipelines", proficiency: 75 },
+      { name: "Git / GitHub Actions", proficiency: 80 },
+      { name: "Networking / OPNsense", proficiency: 70 },
+    ],
+  },
+  {
+    title: "E-Commerce & CMS",
+    level: "Expert — Integration",
+    icon: "shopping",
+    skills: [
+      { name: "WordPress", proficiency: 92 },
+      { name: "Shopify API", proficiency: 80 },
+      { name: "WooCommerce", proficiency: 85 },
+      { name: "Prestashop", proficiency: 78 },
+    ],
+  },
+];

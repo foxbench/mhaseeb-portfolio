@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Muhammad Haseeb — AI Integration Engineer & Full-Stack Developer</title>
+    <meta name="description" content="Senior Full-Stack Developer with 14+ years experience. Specializing in AI integration, legacy system modernization, and scalable architectures. Available for remote work." />
+    <meta name="keywords" content="AI Integration Engineer, Full-Stack Developer, Laravel, PHP, Vue.js, React, LLM, AI, Remote Developer" />
+    <meta property="og:title" content="Muhammad Haseeb — AI Integration Engineer" />
+    <meta property="og:description" content="Senior Full-Stack Developer bridging legacy systems with modern AI capabilities." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.mhaseeb.com" />
+
+    <!-- Preconnect to font CDNs -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://api.fontshare.com" />
+
+    <!-- Fonts: Cabinet Grotesk (display) + Synonym (body) + JetBrains Mono (code) -->
+    <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700,800&f[]=synonym@400,500,600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+    <!-- WebMCP: Machine-readable portfolio for AI agents -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Muhammad Haseeb",
+      "jobTitle": "AI Integration Engineer & Senior Full-Stack Developer",
+      "url": "https://www.mhaseeb.com",
+      "email": "contact@mhaseeb.com",
+      "telephone": "+92-345-667-0001",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Islamabad",
+        "addressCountry": "PK"
+      },
+      "sameAs": [
+        "https://pk.linkedin.com/in/mhaseeb4",
+        "https://github.com/foxbench",
+        "https://www.upwork.com/freelancers/~017e3c85e6a0a492ff"
+      ],
+      "knowsAbout": ["PHP", "Laravel", "Vue.js", "React", "MySQL", "AI Integration", "LLM APIs", "Docker", "System Architecture"],
+      "hasCredential": [
+        {
+          "@type": "EducationalOccupationalCredential",
+          "name": "MS Computer Science (Gold Medalist)",
+          "credentialCategory": "degree",
+          "recognizedBy": { "@type": "Organization", "name": "NUST" }
+        },
+        {
+          "@type": "EducationalOccupationalCredential",
+          "name": "BS Computer Science (Gold Medalist)",
+          "credentialCategory": "degree",
+          "recognizedBy": { "@type": "Organization", "name": "BZU" }
+        }
+      ]
+    }
+    </script>
+    <!-- Prevent flash of unstyled content: apply saved theme before React loads -->
+    <script>
+      (function() {
+        var theme = localStorage.getItem('portfolio-theme') || 'ocean';
+        var mode = localStorage.getItem('portfolio-mode') || 'dark';
+        var resolved = mode === 'system'
+          ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : mode;
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.dataset.mode = resolved;
+      })();
+    </script>
+  </head>
+  <body class="bg-void text-text-primary antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

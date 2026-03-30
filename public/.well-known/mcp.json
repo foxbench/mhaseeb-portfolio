@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "name": "mhaseeb-portfolio",
+  "description": "Muhammad Haseeb's professional portfolio — AI Integration Engineer & Senior Full-Stack Developer. This endpoint exposes structured portfolio data for AI agents.",
+  "url": "https://www.mhaseeb.com",
+  "tools": [
+    {
+      "name": "getProfile",
+      "description": "Get Muhammad Haseeb's professional profile summary including bio, location, availability, and key stats",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "getSkills",
+      "description": "Get technical skills organized by category with proficiency levels",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "Optional filter by category name (e.g., 'Backend', 'AI', 'Frontend')"
+          }
+        }
+      }
+    },
+    {
+      "name": "searchProjects",
+      "description": "Search portfolio projects by keyword, technology, or category",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search term to filter projects (matches title, description, tech stack, or category)"
+          }
+        }
+      }
+    },
+    {
+      "name": "getExperience",
+      "description": "Get professional work experience timeline",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "company": {
+            "type": "string",
+            "description": "Optional filter by company name"
+          }
+        }
+      }
+    },
+    {
+      "name": "getEducation",
+      "description": "Get education history, degrees, GPA, and publications",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "getContactInfo",
+      "description": "Get contact information and availability for hiring",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}

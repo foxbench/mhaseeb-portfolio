@@ -1,0 +1,25 @@
+export const profile = {
+  name: "Muhammad Haseeb",
+  title: "AI Integration Engineer",
+  subtitle: "Senior Full-Stack Developer",
+  location: "Islamabad, Pakistan",
+  timezone: "UTC+5",
+  availability: "Available for Remote Work",
+  bio: "I build production systems at scale — from enterprise platforms processing millions of records to AI-powered e-commerce integrations handling 20K+ daily orders. I bridge legacy systems with modern AI capabilities.",
+  shortBio: "14+ years building scalable systems. Double gold medalist. I turn legacy codebases into AI-powered platforms.",
+  email: "contact@mhaseeb.com",
+  phone: "",
+  website: "www.mhaseeb.com",
+  social: {
+    linkedin: "https://pk.linkedin.com/in/mhaseeb4",
+    github: "https://github.com/foxbench",
+    upwork: "https://www.upwork.com/freelancers/~017e3c85e6a0a492ff",
+  },
+  stats: [
+    { value: "14+", label: "Years Experience" },
+    { value: "150+", label: "Projects Delivered" },
+    { value: "5K+", label: "Upwork Hours" },
+    { value: "100%", label: "Job Success Score" },
+  ],
+  resumeUrl: "/Muhammad_Haseeb_Resume.pdf",
+};

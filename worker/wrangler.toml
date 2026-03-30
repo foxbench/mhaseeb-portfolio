@@ -1,0 +1,7 @@
+name = "mhaseeb-chat"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+
+[vars]
+GROQ_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
+GROQ_FALLBACK_MODEL = "llama-3.1-8b-instant"
