@@ -145,38 +145,60 @@ function SuggestionCarousel({ suggestions, onSelect }) {
   );
 }
 
-// Strip the leading <ctx>{...}</ctx> tag from a streaming response.
-// Returns { visible, ctx, settled } — `settled` means we've decided whether
-// the response has a ctx tag or not, so future chunks can pass through directly.
-function makeCtxStripper(onCtxFound) {
-  let buffer = "";
-  let settled = false;
+// Process the full streaming text so far, extracting any ctx JSON the model
+// emitted (wrapped in <ctx>...</ctx> or as a bare {"lang":...} object) at
+// either the start or the end. Also hides partial ctx-in-progress so the
+// visitor never sees raw JSON during streaming.
+//
+// Returns { display, ctx } where ctx is the extracted JSON string or null.
+function processStreamingText(raw) {
+  let text = raw;
+  let ctx = null;
 
-  return function feed(chunk) {
-    if (settled) return chunk;
-    buffer += chunk;
+  // 1. Wrapped form anywhere: <ctx>{...}</ctx>
+  let m = text.match(/\s*<ctx>\s*(\{[^]*?\})\s*<\/ctx>\s*\n?/);
+  if (m) {
+    ctx = m[1];
+    text = (text.slice(0, m.index) + text.slice(m.index + m[0].length)).trim();
+    return { display: text, ctx };
+  }
 
-    // Still accumulating the opening tag — wait for more.
-    if (buffer.length < 5) {
-      return "<ctx>".startsWith(buffer) ? "" : (settled = true, buffer);
+  // 2. Bare JSON object containing "lang" at the very end
+  m = text.match(/\n*\s*(\{\s*"lang"[^]*\})\s*$/);
+  if (m) {
+    ctx = m[1];
+    return { display: text.slice(0, m.index).trimEnd(), ctx };
+  }
+
+  // 3. Bare JSON object containing "lang" at the very start
+  m = text.match(/^\s*(\{\s*"lang"[^]*?\})\s*\n+/);
+  if (m) {
+    ctx = m[1];
+    return { display: text.slice(m[0].length), ctx };
+  }
+
+  // 4. Hide partial ctx still streaming so it doesn't flash on screen.
+  // Trailing unclosed `{` that looks like JSON-in-progress:
+  const lastBrace = text.lastIndexOf("{");
+  if (lastBrace !== -1 && text.indexOf("}", lastBrace) === -1) {
+    const tail = text.slice(lastBrace);
+    if (/^\{["\s]/.test(tail) || tail === "{") {
+      return { display: text.slice(0, lastBrace).trimEnd(), ctx: null };
     }
-
-    if (!buffer.startsWith("<ctx>")) {
-      settled = true;
-      return buffer;
+  }
+  // Trailing partial <ctx tag:
+  const lastLt = text.lastIndexOf("<");
+  if (lastLt !== -1) {
+    const tail = text.slice(lastLt);
+    if (/^<\/?(c|ct|ctx|ctx>[^]*)$/.test(tail)) {
+      return { display: text.slice(0, lastLt).trimEnd(), ctx: null };
     }
+  }
 
-    const end = buffer.indexOf("</ctx>");
-    if (end === -1) return ""; // ctx still streaming
-
-    const ctxJson = buffer.slice(5, end);
-    onCtxFound(ctxJson);
-    settled = true;
-    return buffer.slice(end + 6).replace(/^\n/, "");
-  };
+  return { display: text, ctx: null };
 }
 
-async function streamChatResponse(conversationHistory, sessionContext, onChunk, onCtx, onDone, onError) {
+async function streamChatResponse(conversationHistory, sessionContext, onText, onDone, onError) {
   try {
     const response = await fetch(config.chatApiUrl, {
       method: "POST",
@@ -192,7 +214,7 @@ async function streamChatResponse(conversationHistory, sessionContext, onChunk, 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
-    const stripCtx = makeCtxStripper(onCtx);
+    let raw = "";
 
     while (true) {
       const { done, value } = await reader.read();
@@ -208,15 +230,15 @@ async function streamChatResponse(conversationHistory, sessionContext, onChunk, 
 
         const data = trimmed.slice(6);
         if (data === "[DONE]") {
-          onDone();
+          onDone(raw);
           return;
         }
 
         try {
           const parsed = JSON.parse(data);
           if (parsed.content) {
-            const visible = stripCtx(parsed.content);
-            if (visible) onChunk(visible);
+            raw += parsed.content;
+            onText(raw);
           }
           if (parsed.error) throw new Error(parsed.error);
         } catch (e) {
@@ -227,7 +249,7 @@ async function streamChatResponse(conversationHistory, sessionContext, onChunk, 
       }
     }
 
-    onDone();
+    onDone(raw);
   } catch (err) {
     onError(err);
   }
@@ -316,37 +338,47 @@ export default function ChatWidget() {
       streamChatResponse(
         conversationRef.current,
         sessionCtxRef.current,
-        (chunk) => {
+        (rawText) => {
+          const { display, ctx } = processStreamingText(rawText);
+          if (ctx) {
+            try {
+              JSON.parse(ctx);
+              sessionCtxRef.current = ctx;
+            } catch {
+              // Invalid JSON — keep prior ctx.
+            }
+          }
+          if (!display) return;
           if (streamingTextRef.current === "") {
             setIsTyping(false);
             setIsStreaming(true);
           }
-          streamingTextRef.current += chunk;
+          streamingTextRef.current = display;
           setMessages((prev) => {
             const existing = prev.find((m) => m.id === streamingMsgId);
             if (existing) {
               return prev.map((m) =>
-                m.id === streamingMsgId
-                  ? { ...m, text: streamingTextRef.current }
-                  : m
+                m.id === streamingMsgId ? { ...m, text: display } : m
               );
             }
             return [
               ...prev,
-              { id: streamingMsgId, text: streamingTextRef.current, isUser: false },
+              { id: streamingMsgId, text: display, isUser: false },
             ];
           });
         },
-        (ctxJson) => {
-          // Validate it's parseable JSON before persisting; ignore garbage.
-          try {
-            JSON.parse(ctxJson);
-            sessionCtxRef.current = ctxJson;
-          } catch {
-            // Model emitted invalid ctx — keep prior value.
+        (rawFinal) => {
+          // Final pass — catch ctx that only became extractable at the end.
+          const { display, ctx } = processStreamingText(rawFinal);
+          if (ctx) {
+            try { JSON.parse(ctx); sessionCtxRef.current = ctx; } catch { /* noop */ }
           }
-        },
-        () => {
+          if (display && display !== streamingTextRef.current) {
+            streamingTextRef.current = display;
+            setMessages((prev) =>
+              prev.map((m) => (m.id === streamingMsgId ? { ...m, text: display } : m))
+            );
+          }
           setIsTyping(false);
           setIsStreaming(false);
           if (streamingTextRef.current) {

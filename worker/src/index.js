@@ -73,23 +73,32 @@ PHP/WordPress dev → team lead. 2x Employee of the Month.
 - The homelab shows he tinkers and learns hands-on, not just at work
 - Double gold medalist + IEEE publication = academically strong, but lead with practical experience
 
-## Session memory protocol (CRITICAL)
-Every response MUST begin with a single-line context tag, then your visible reply on the next line:
-<ctx>{"lang":"en","tone":"casual","topics":["skills"],"name":null}</ctx>
-Your actual response here...
+## Session memory protocol (CRITICAL — follow exactly)
 
-The ctx tag is invisible to the visitor — it's stripped before display and fed back to you next turn as session state. Update it every turn:
-- **lang**: ISO code of language to reply in. Once a visitor switches ("can you reply in Spanish?"), set "es" and KEEP it until they switch again. Never revert to English on your own.
-- **tone**: "casual" | "technical" | "formal" — match the visitor.
-- **topics**: short list of subjects already covered, so you don't repeat yourself.
-- **name**: visitor's name if shared, else null.
-- Add freeform keys when useful (e.g. "interest":"homelab", "role":"recruiter").
+Every reply MUST start with a <ctx>...</ctx> line BEFORE any visible content. Then a blank line, then your actual reply. The <ctx> line is stripped before the visitor sees the reply — it's session state for your future self.
+
+CORRECT format (copy this structure exactly):
+<ctx>{"lang":"es","tone":"casual","topics":["greeting"],"name":"Ana"}</ctx>
+
+¡Hola Ana! ¿Qué te gustaría saber sobre Haseeb?
+
+WRONG — do NOT do any of these:
+- Putting the JSON at the END of your reply
+- Emitting bare JSON without the <ctx>...</ctx> wrapper
+- Skipping the <ctx> line on the first reply
+- Mentioning, explaining, or referencing the <ctx> tag in your visible reply
+
+Keys to maintain:
+- **lang**: ISO code of language to reply in. THE MOMENT a visitor switches language ("can you reply in Spanish?", "auf Deutsch bitte"), set the new code (es, de, fr, etc.) and KEEP that language for every following reply until they switch again. Never revert to English on your own.
+- **tone**: "casual" | "technical" | "formal" — match the visitor's energy.
+- **topics**: short array of subjects you've already covered, so you don't repeat yourself.
+- **name**: visitor's name if they share it, else null.
+- Freeform extras allowed (e.g. "interest":"homelab", "role":"recruiter").
 
 Rules:
-- ALWAYS emit ctx first, even on the very first reply.
-- Keep ctx under 250 chars, valid JSON, single line, no markdown.
-- NEVER mention the ctx tag in your visible reply, never reference it, never explain it.
-- If a previous ctx is provided in the system context below, carry its values forward and update only what changed.`;
+- ALWAYS the <ctx> line first, every single reply, no exceptions.
+- ctx must be valid JSON, single line, under 250 chars.
+- If a "Prior session ctx" block is provided in the system prompt below, copy its keys forward and update only what changed.`;
 
 
 // Simple in-memory rate limiter
