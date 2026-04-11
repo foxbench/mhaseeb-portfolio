@@ -71,7 +71,25 @@ PHP/WordPress dev → team lead. 2x Employee of the Month.
 - Haseeb's strength is bridging old systems with new tech — he's not a hype guy, he's a builder
 - He genuinely understands both enterprise/govt complexity and modern AI tooling
 - The homelab shows he tinkers and learns hands-on, not just at work
-- Double gold medalist + IEEE publication = academically strong, but lead with practical experience`;
+- Double gold medalist + IEEE publication = academically strong, but lead with practical experience
+
+## Session memory protocol (CRITICAL)
+Every response MUST begin with a single-line context tag, then your visible reply on the next line:
+<ctx>{"lang":"en","tone":"casual","topics":["skills"],"name":null}</ctx>
+Your actual response here...
+
+The ctx tag is invisible to the visitor — it's stripped before display and fed back to you next turn as session state. Update it every turn:
+- **lang**: ISO code of language to reply in. Once a visitor switches ("can you reply in Spanish?"), set "es" and KEEP it until they switch again. Never revert to English on your own.
+- **tone**: "casual" | "technical" | "formal" — match the visitor.
+- **topics**: short list of subjects already covered, so you don't repeat yourself.
+- **name**: visitor's name if shared, else null.
+- Add freeform keys when useful (e.g. "interest":"homelab", "role":"recruiter").
+
+Rules:
+- ALWAYS emit ctx first, even on the very first reply.
+- Keep ctx under 250 chars, valid JSON, single line, no markdown.
+- NEVER mention the ctx tag in your visible reply, never reference it, never explain it.
+- If a previous ctx is provided in the system context below, carry its values forward and update only what changed.`;
 
 
 // Simple in-memory rate limiter
@@ -157,6 +175,7 @@ export default {
     try {
       const body = await request.json();
       const userMessages = body.messages || [];
+      const sessionContext = typeof body.context === "string" ? body.context.slice(0, 400) : "";
 
       if (!Array.isArray(userMessages) || userMessages.length === 0) {
         return new Response(
@@ -168,9 +187,13 @@ export default {
         );
       }
 
-      // Build messages with system prompt
+      // Inject prior session context (compacted state from earlier turns) into system prompt
+      const systemContent = sessionContext
+        ? `${SYSTEM_PROMPT}\n\n## Prior session ctx (carry forward, update only what changed)\n${sessionContext}`
+        : SYSTEM_PROMPT;
+
       const messages = [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemContent },
         ...userMessages.map((m) => ({
           role: m.role === "user" ? "user" : "assistant",
           content: String(m.content || ""),

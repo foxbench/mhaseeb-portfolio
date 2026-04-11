@@ -145,12 +145,43 @@ function SuggestionCarousel({ suggestions, onSelect }) {
   );
 }
 
-async function streamChatResponse(conversationHistory, onChunk, onDone, onError) {
+// Strip the leading <ctx>{...}</ctx> tag from a streaming response.
+// Returns { visible, ctx, settled } — `settled` means we've decided whether
+// the response has a ctx tag or not, so future chunks can pass through directly.
+function makeCtxStripper(onCtxFound) {
+  let buffer = "";
+  let settled = false;
+
+  return function feed(chunk) {
+    if (settled) return chunk;
+    buffer += chunk;
+
+    // Still accumulating the opening tag — wait for more.
+    if (buffer.length < 5) {
+      return "<ctx>".startsWith(buffer) ? "" : (settled = true, buffer);
+    }
+
+    if (!buffer.startsWith("<ctx>")) {
+      settled = true;
+      return buffer;
+    }
+
+    const end = buffer.indexOf("</ctx>");
+    if (end === -1) return ""; // ctx still streaming
+
+    const ctxJson = buffer.slice(5, end);
+    onCtxFound(ctxJson);
+    settled = true;
+    return buffer.slice(end + 6).replace(/^\n/, "");
+  };
+}
+
+async function streamChatResponse(conversationHistory, sessionContext, onChunk, onCtx, onDone, onError) {
   try {
     const response = await fetch(config.chatApiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: conversationHistory }),
+      body: JSON.stringify({ messages: conversationHistory, context: sessionContext }),
     });
 
     if (!response.ok) {
@@ -161,6 +192,7 @@ async function streamChatResponse(conversationHistory, onChunk, onDone, onError)
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
+    const stripCtx = makeCtxStripper(onCtx);
 
     while (true) {
       const { done, value } = await reader.read();
@@ -182,7 +214,10 @@ async function streamChatResponse(conversationHistory, onChunk, onDone, onError)
 
         try {
           const parsed = JSON.parse(data);
-          if (parsed.content) onChunk(parsed.content);
+          if (parsed.content) {
+            const visible = stripCtx(parsed.content);
+            if (visible) onChunk(visible);
+          }
           if (parsed.error) throw new Error(parsed.error);
         } catch (e) {
           if (e.message !== "Unexpected end of JSON input") {
@@ -198,6 +233,9 @@ async function streamChatResponse(conversationHistory, onChunk, onDone, onError)
   }
 }
 
+// Keep only the last N raw turns — older context lives in the ctx tag.
+const HISTORY_WINDOW = 6;
+
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -210,6 +248,7 @@ export default function ChatWidget() {
   const inputRef = useRef(null);
   const streamingTextRef = useRef("");
   const conversationRef = useRef([]);
+  const sessionCtxRef = useRef("");
 
   // Initialize with greeting on first open
   useEffect(() => {
@@ -264,7 +303,7 @@ export default function ChatWidget() {
       conversationRef.current = [
         ...conversationRef.current,
         { role: "user", content: trimmed },
-      ];
+      ].slice(-HISTORY_WINDOW);
 
       if (!apiAvailable) {
         setTimeout(() => fallbackResponse(trimmed), 600);
@@ -276,6 +315,7 @@ export default function ChatWidget() {
 
       streamChatResponse(
         conversationRef.current,
+        sessionCtxRef.current,
         (chunk) => {
           if (streamingTextRef.current === "") {
             setIsTyping(false);
@@ -297,6 +337,15 @@ export default function ChatWidget() {
             ];
           });
         },
+        (ctxJson) => {
+          // Validate it's parseable JSON before persisting; ignore garbage.
+          try {
+            JSON.parse(ctxJson);
+            sessionCtxRef.current = ctxJson;
+          } catch {
+            // Model emitted invalid ctx — keep prior value.
+          }
+        },
         () => {
           setIsTyping(false);
           setIsStreaming(false);
@@ -304,7 +353,7 @@ export default function ChatWidget() {
             conversationRef.current = [
               ...conversationRef.current,
               { role: "assistant", content: streamingTextRef.current },
-            ];
+            ].slice(-HISTORY_WINDOW);
           }
           setSuggestions(["Skills & expertise", "Projects", "AI experience", "Contact info"]);
         },
